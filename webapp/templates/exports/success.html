@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}Xuất kho thành công{% endblock %}{% block main_content %}<section class="success card"><div class="check">✓</div><h1>Xuất kho thành công</h1><h2>{{ order.order_code }}</h2><p>{{ order.created_at|vn_time }} · {{ order.created_by_name }}</p>
+<p class="invoice-status">{% if order.invoice_issued %}Đã xuất hóa đơn{% else %}Chưa xuất hóa đơn{% endif %}</p>
+<ul>{% for i in order['items'] %}<li>{{ i.product_name_snapshot }}: {{ i.quantity }} {{ i.unit_snapshot }} — còn {{ i.stock_after }} {{ i.unit_snapshot }}</li>{% endfor %}</ul><a class="button primary" href="{{ url_for('inventory.index') }}">Tạo phiếu mới</a> <a class="button" href="{{ url_for('exports.detail',code=order.order_code) }}">Xem chi tiết phiếu</a></section>{% endblock %}
+
+{% block scripts %}
+{# Phiếu đã ghi xong thì giỏ hàng phải rỗng, nếu không lần "Tiếp tục" sau sẽ xuất trùng #}
+<script src="{{ url_for('static',filename='js/export-cart.js') }}"></script>
+<script>window.KhoExportCart && window.KhoExportCart.clear();</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}{% block title %}{{ order.order_code }}{% endblock %}{% block main_content %}
+{% set cancelled = order.status == 'cancelled' %}
+<div class="order-detail">
+<div class="detail-header"><h1>Phiếu {{ order.order_code }}</h1><a href="{{ url_for('print.print_order',code=order.order_code) }}" target="_blank" class="button">🖨️ In phiếu</a></div>
+
+{% if cancelled %}
+<div class="flash error"><span>⚠</span><span>Phiếu đã hủy {{ order.cancelled_at|vn_time }}{% if order.cancelled_by_name %} bởi {{ order.cancelled_by_name }}{% endif %}. Hàng đã trả về kho.{% if order.cancel_reason %} Lý do: {{ order.cancel_reason }}{% endif %}</span></div>
+{% endif %}
+
+<div class="card">
+<p>Người xuất: <strong>{{ order.created_by_name }}</strong> · {{ order.created_at|vn_time }}</p>
+<p>Người nhận: {{ order.customer_name or '—' }}</p>
+<p>Địa chỉ: {{ order.delivery_address or '—' }}</p>
+<p>Ghi chú: {{ order.note or '—' }}</p>
+<h2>{% if order.invoice_issued %}Đã xuất hóa đơn{% else %}Chưa xuất hóa đơn{% endif %}</h2>
+{% if order.invoice_issued %}<p>{{ order.invoice_issued_at|vn_time }} · {{ order.invoice_by_name }}</p>{% endif %}
+
+{% if not cancelled %}
+<form method="post" action="{{ url_for('exports.update_invoice',code=order.order_code) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label class="invoice"><input type="checkbox" name="invoice_issued" value="1" {% if order.invoice_issued %}checked{% endif %}> Đã xuất hóa đơn</label><button class="primary">Cập nhật trạng thái hóa đơn</button></form>
+
+{% if g.user and g.user.role == 'admin' %}
+<form method="post" action="{{ url_for('exports.cancel_order',code=order.order_code) }}" onsubmit="return confirm('Hủy phiếu này và trả hàng về kho?');" style="margin-top:12px">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label>Lý do hủy<input name="reason" maxlength="500" placeholder="Ví dụ: khách trả hàng"></label>
+<button class="danger">Hủy phiếu</button>
+</form>
+{% endif %}
+{% endif %}
+
+<div class="table-container"><table><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Tồn trước</th><th>Tồn sau</th></tr></thead><tbody>{% for i in order['items'] %}<tr><td>{{ i.product_name_snapshot }}<small>{{ i.sku_snapshot }}</small></td><td>{{ i.quantity }} {{ i.unit_snapshot }}</td><td>{{ i.stock_before }}</td><td>{{ i.stock_after }}</td></tr>{% endfor %}</tbody></table></div>
+</div></div>{% endblock %}

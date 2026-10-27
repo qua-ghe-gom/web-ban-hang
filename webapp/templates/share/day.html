@@ -1,0 +1,29 @@
+{% extends 'share/base.html' %}
+{% block title %}Ảnh ngày {{ ngay|vn_time('%d/%m/%y') }}{% endblock %}
+{% block main_content %}
+<div class="photos-page">
+<div class="header">
+<h1 class="header-title">Ảnh ngày {{ ngay|vn_time('%d/%m/%Y') }}</h1>
+<div class="header-actions"><a class="btn btn-secondary" href="{{ url_for('share.index', token=token) }}">← Về gallery</a></div>
+</div>
+
+<div class="filters-bar">
+<span>{{ cnt }} ảnh{% if sold %} · đã bán {{ sold }}{% endif %}</span>
+{% if prev_day %}<a class="btn btn-secondary" href="{{ url_for('share.day_view', token=token, ngay=prev_day) }}">‹ {{ prev_day|vn_time('%d/%m/%y') }}</a>{% endif %}
+{% if next_day %}<a class="btn btn-secondary" href="{{ url_for('share.day_view', token=token, ngay=next_day) }}">{{ next_day|vn_time('%d/%m/%y') }} ›</a>{% endif %}
+</div>
+
+<div class="photo-grid">
+{% for p in photos %}
+<a class="photo-card" href="{{ url_for('share.detail', token=token, photo_id=p['id']) }}">
+<img src="{{ url_for('share.media', token=token, relpath=p['thumb_filename']) }}" alt="{{ p['caption'] or 'Ảnh kho' }}" loading="lazy">
+<div class="photo-card-body">
+<span class="photo-date">Ảnh {{ loop.index }}/{{ photos|length }}</span>
+{% if p['product_name'] %}<span class="photo-product">{{ p['product_name'] }}{% if p['quantity'] %} ×{{ p['quantity'] }}{% endif %}</span>{% endif %}
+{% if p['caption'] %}<p class="photo-caption">{{ p['caption'] }}</p>{% endif %}
+</div>
+</a>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v='20261020-1') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+{# Đặt theme ngay khi parser vào body, trước khi trang vẽ. Nếu để script ở cuối
+   trang như trước thì mỗi lần tải đều nháy nền sáng rồi mới chuyển sang tối. #}
+<script>
+(function () {
+    var saved = null;
+    try { saved = localStorage.darkMode; } catch (e) {}
+    var dark = saved === 'true' ||
+        (saved !== 'false' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.body.classList.add('dark-mode');
+})();
+</script>
+{% if g.user %}
+<div class="wrapper">
+    <div class="nav-backdrop" id="nav-backdrop" hidden></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand">
+                <span>📦</span>
+                <span>{{ app_name|upper }}</span>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item {{ 'active' if request.endpoint == 'dashboard.index' else '' }}">
+                <span class="nav-item-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('inventory.index') }}" class="nav-item {{ 'active' if request.endpoint == 'inventory.index' else '' }}">
+                <span class="nav-item-icon">📦</span>
+                <span>Xuất kho</span>
+            </a>
+            <a href="{{ url_for('products.index') }}" class="nav-item {{ 'active' if request.endpoint == 'products.index' else '' }}">
+                <span class="nav-item-icon">🏷️</span>
+                <span>Sản phẩm</span>
+            </a>
+            <a href="{{ url_for('photos.index') }}" class="nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('photos.') else '' }}">
+                <span class="nav-item-icon">📸</span>
+                <span>Ảnh kho</span>
+            </a>
+            {% if g.user.role == 'admin' %}
+            <a href="{{ url_for('products.trash') }}" class="nav-item {{ 'active' if request.endpoint == 'products.trash' else '' }}">
+                <span class="nav-item-icon">🗑️</span>
+                <span>Thùng rác</span>
+            </a>
+            <a href="{{ url_for('backup.index') }}" class="nav-item {{ 'active' if request.endpoint == 'backup.index' else '' }}">
+                <span class="nav-item-icon">💾</span>
+                <span>Backup</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('exports.history') }}" class="nav-item {{ 'active' if request.endpoint == 'exports.history' else '' }}">
+                <span class="nav-item-icon">📋</span>
+                <span>Lịch sử</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ g.user.display_name[0] if g.user.display_name else 'A' }}</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.875rem;">{{ g.user.display_name }}</div>
+                    <div style="font-size: 0.75rem; opacity: 0.7;">{{ 'Admin' if g.user.role == 'admin' else 'Staff' }}</div>
+                </div>
+            </div>
+            <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top: var(--space-sm);">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn btn-secondary w-full" style="font-size: 0.75rem; padding: var(--space-xs);">
+                    Đăng xuất
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            {# Trên điện thoại sidebar trượt ra ngoài màn hình, không có nút này thì
+               không còn đường nào vào Dashboard / Sản phẩm / Lịch sử / Đăng xuất. #}
+            <button type="button" id="mobile-menu-btn" class="mobile-menu-btn"
+                    aria-controls="sidebar" aria-expanded="false" aria-label="Mở menu">
+                <span class="mobile-menu-bars" aria-hidden="true"></span>
+            </button>
+            <h1 class="header-title">{% block page_title %}{% endblock %}</h1>
+            <div class="header-actions">
+                <button id="dark-mode-toggle" class="btn btn-icon" title="Chế độ tối/sáng">
+                    <span class="dark-icon-hidden">🌙</span>
+                    <span class="dark-icon-visible d-none">☀️</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="flash {{ category }}">
+                <span>{{ '✓' if category == 'success' else '⚠' }}</span>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+            {% block main_content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<script>
+// Menu điện thoại
+const menuBtn = document.getElementById('mobile-menu-btn');
+const sidebar = document.getElementById('sidebar');
+const navBackdrop = document.getElementById('nav-backdrop');
+if (menuBtn && sidebar) {
+    const setNavOpen = (open) => {
+        document.body.classList.toggle('nav-open', open);
+        sidebar.classList.toggle('active', open);
+        if (navBackdrop) navBackdrop.hidden = !open;
+        menuBtn.setAttribute('aria-expanded', String(open));
+        menuBtn.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
+        if (open) {
+            const first = sidebar.querySelector('a, button');
+            if (first) first.focus();
+        } else {
+            menuBtn.focus();
+        }
+    };
+    menuBtn.addEventListener('click', () => {
+        setNavOpen(!document.body.classList.contains('nav-open'));
+    });
+    if (navBackdrop) navBackdrop.addEventListener('click', () => setNavOpen(false));
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && document.body.classList.contains('nav-open')) setNavOpen(false);
+    });
+    // Chuyển trang thì đóng lại, tránh menu còn mở khi trang mới hiện ra
+    sidebar.querySelectorAll('.nav-item').forEach((link) => {
+        link.addEventListener('click', () => setNavOpen(false));
+    });
+}
+
+// Nút đổi theme. Theme đã được áp ở đầu body, đây chỉ đồng bộ icon và ghi nhớ lựa chọn.
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+if (darkModeToggle) {
+    const syncIcons = () => {
+        const isDark = document.body.classList.contains('dark-mode');
+        document.querySelector('.dark-icon-hidden').classList.toggle('d-none', isDark);
+        document.querySelector('.dark-icon-visible').classList.toggle('d-none', !isDark);
+        darkModeToggle.setAttribute('aria-pressed', String(isDark));
+    };
+    syncIcons();
+    darkModeToggle.addEventListener('click', () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        try { localStorage.darkMode = isDark; } catch (e) {}
+        syncIcons();
+    });
+}
+</script>
+
+{% else %}
+<!-- Login Page -->
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <span style="font-size: 3rem;">📦</span>
+            <h1>{{ app_name }}</h1>
+            <p class="text-muted">Đăng nhập để quản lý kho hàng</p>
+        </div>
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="flash {{ category }}">
+            <span>{{ '✓' if category == 'success' else '⚠' }}</span>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% block login_content %}{% endblock %}
+    </div>
+</div>
+{% endif %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

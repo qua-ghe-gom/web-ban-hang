@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Up ảnh kho{% endblock %}
+{% block main_content %}
+<div class="photos-page">
+<div class="header"><h1 class="header-title">Up ảnh kho</h1></div>
+<div class="card">
+<form method="post" action="{{ url_for('photos.upload') }}" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="form-group">
+<label class="form-label" for="images">Ảnh</label>
+<div class="dropzone" id="dropzone">
+<input type="file" id="images" name="images" accept="image/*" multiple required>
+<div class="dropzone-inner">
+<span class="dropzone-icon" aria-hidden="true">📸</span>
+<span class="dropzone-title">Bấm để chọn ảnh</span>
+<span class="dropzone-hints"><span>kéo thả</span><span>dán Ctrl+V</span><span>tối đa 50 ảnh — ảnh tự nén, gửi được nhiều</span></span>
+</div>
+</div>
+<span class="paste-count" id="paste-count">Chưa có ảnh nào</span>
+<div class="paste-previews" id="paste-previews"></div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label class="form-label" for="taken_on">Ngày</label>
+<input type="text" id="taken_on" name="taken_on" class="form-input" value="{{ today }}"
+       placeholder="dd/mm/yy" inputmode="numeric" pattern="\d{2}/\d{2}/\d{2}" title="Nhập ngày dạng dd/mm/yy">
+<small>Định dạng dd/mm/yy. Không phải ngày hôm nay thì sửa lại ngày chụp.</small>
+</div>
+<div class="form-group">
+<label class="form-label" for="product_id">Sản phẩm (không bắt buộc)</label>
+<select id="product_id" name="product_id" class="form-select">
+<option value="">— Không chọn —</option>
+{% for pr in products %}<option value="{{ pr['id'] }}">{{ pr['name'] }}</option>{% endfor %}
+</select>
+</div>
+<div class="form-group">
+<label class="form-label" for="quantity">Số lượng đã bán</label>
+<input type="number" id="quantity" name="quantity" class="form-input" min="1" max="1000000" inputmode="numeric">
+</div>
+</div>
+<div class="form-group">
+<label class="form-label" for="caption">Ghi chú</label>
+<textarea id="caption" name="caption" class="form-textarea" rows="3" maxlength="500" placeholder="Ví dụ: bán 20 hộp mạ kẽm cho anh Hòa"></textarea>
+</div>
+<button class="btn btn-primary" type="submit">Lưu ảnh</button>
+</form>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/photo-upload.js', v='20260905-2') }}" defer></script>
+{% endblock %}

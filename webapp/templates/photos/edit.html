@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Sửa ảnh{% endblock %}
+{% block main_content %}
+<div class="photos-page">
+<div class="header"><h1 class="header-title">Sửa thông tin ảnh</h1></div>
+<div class="card">
+<img class="photo-detail-img" style="max-height:280px;object-fit:cover;margin-bottom:12px" src="{{ url_for('photos.media', relpath=photo['thumb_filename']) }}" alt="Ảnh kho">
+<form method="post" action="{{ url_for('photos.edit', photo_id=photo['id']) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="form-row">
+<div class="form-group">
+<label class="form-label" for="taken_on">Ngày</label>
+<input type="text" id="taken_on" name="taken_on" class="form-input" value="{{ photo['taken_on']|vn_time('%d/%m/%y') }}"
+       placeholder="dd/mm/yy" inputmode="numeric" pattern="\d{2}/\d{2}/\d{2}" title="Nhập ngày dạng dd/mm/yy">
+</div>
+<div class="form-group">
+<label class="form-label" for="product_id">Sản phẩm (không bắt buộc)</label>
+<select id="product_id" name="product_id" class="form-select">
+<option value="">— Không chọn —</option>
+{% for pr in products %}<option value="{{ pr['id'] }}" {{ 'selected' if pr['id'] == photo['product_id'] }}>{{ pr['name'] }}</option>{% endfor %}
+</select>
+</div>
+<div class="form-group">
+<label class="form-label" for="quantity">Số lượng đã bán</label>
+<input type="number" id="quantity" name="quantity" class="form-input" min="1" max="1000000" inputmode="numeric" value="{{ photo['quantity'] or '' }}">
+</div>
+</div>
+<div class="form-group">
+<label class="form-label" for="caption">Ghi chú</label>
+<textarea id="caption" name="caption" class="form-textarea" rows="3" maxlength="500">{{ photo['caption'] or '' }}</textarea>
+</div>
+<p><small>Muốn đổi file ảnh thì xóa ảnh này và up ảnh mới.</small></p>
+<button class="btn btn-primary" type="submit">Lưu thay đổi</button>
+<a class="btn btn-secondary" href="{{ url_for('photos.detail', photo_id=photo['id']) }}">Bỏ</a>
+</form>
+</div>
+</div>
+{% endblock %}

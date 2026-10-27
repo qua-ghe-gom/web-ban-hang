@@ -1,0 +1,50 @@
+{% extends 'share/base.html' %}
+{% block title %}Ảnh kho{% endblock %}
+{% block main_content %}
+<div class="photos-page">
+<div class="header">
+<h1 class="header-title">📸 Ảnh kho</h1>
+</div>
+
+<div class="filters-bar">
+<form method="get" class="d-flex gap-sm items-center">
+<select name="thang" class="form-select" onchange="this.form.submit()">
+<option value="">Tất cả các tháng</option>
+{% for m in months %}<option value="{{ m }}" {{ 'selected' if m == month }}>{{ m|vn_time('%m/%Y') }}</option>{% endfor %}
+</select>
+<span>{{ days|length }} ngày · {{ total }} ảnh{% if sold %} · đã bán {{ sold }}{% endif %}</span>
+</form>
+</div>
+
+{% if days %}
+<div class="photo-grid">
+{% for d in days %}
+{% set c = covers[d['cover_id']] %}
+<a class="photo-card day-card" href="{{ url_for('share.day_view', token=token, ngay=d['taken_on']) }}">
+<div class="day-cover">
+<img src="{{ url_for('share.media', token=token, relpath=c['thumb_filename']) }}" alt="{{ c['caption'] or 'Ảnh ngày ' ~ (d['taken_on']|vn_time('%d/%m/%y')) }}" loading="lazy">
+<span class="day-badge">{{ d['cnt'] }} ảnh</span>
+</div>
+<div class="photo-card-body">
+<span class="photo-date">{{ d['taken_on']|vn_time('%d/%m/%y') }}</span>
+{% if d['sold'] %}<span class="photo-product">đã bán {{ d['sold'] }}</span>{% endif %}
+{% if c['caption'] %}<p class="photo-caption">{{ c['caption'] }}</p>{% endif %}
+</div>
+</a>
+{% endfor %}
+</div>
+{% if pages > 1 %}
+<div class="pagination">
+{% if page > 1 %}<a class="btn btn-secondary" href="?{{ ('thang=' + month + '&') if month else '' }}page={{ page - 1 }}">‹ Trước</a>{% endif %}
+<span>Trang {{ page }}/{{ pages }}</span>
+{% if page < pages %}<a class="btn btn-secondary" href="?{{ ('thang=' + month + '&') if month else '' }}page={{ page + 1 }}">Sau ›</a>{% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+<div class="empty-icon">📷</div>
+<p>Chưa có ảnh nào trong kho ảnh.</p>
+</div>
+{% endif %}
+</div>
+{% endblock %}

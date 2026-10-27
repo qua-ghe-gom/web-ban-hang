@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Xuất kho{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/export-enhanced.css') }}">
+{% endblock %}
+
+{% block page_title %}📦 Xuất kho{% endblock %}
+
+{% block main_content %}
+<!-- Filters -->
+<form method="get" action="{{ url_for('inventory.index') }}" class="filters-bar">
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Tìm SKU, tên hàng, quy cách…" class="search-input">
+    </div>
+    <select name="category" class="form-select">
+        <option value="">Tất cả danh mục</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if request.args.get('category')|string == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="stock" class="form-select">
+        <option value="">Tất cả hàng còn tồn</option>
+        <option value="low" {% if request.args.get('stock') == 'low' %}selected{% endif %}>Sắp hết</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Lọc</button>
+</form>
+
+<!-- Main Content -->
+<div class="export-warehouse">
+    <!-- Products Section -->
+    <section class="export-products">
+        {% if products %}
+        {% for p in products %}
+        <article class="export-product-card" data-product-id="{{ p.id }}" data-name="{{ p.name }}" data-sku="{{ p.sku }}" data-unit="{{ p.unit }}" data-stock="{{ p.quantity }}">
+            <div class="product-header">
+                <h3 class="product-name">{{ p.name }}</h3>
+                <span class="product-sku">{{ p.sku }}</span>
+            </div>
+
+            <div class="product-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">📍</span>
+                    <span>{{ p.location or 'Chưa có vị trí' }}</span>
+                </div>
+                {% if p.note %}
+                <div class="meta-item">
+                    <span class="meta-icon">📝</span>
+                    <span>{{ p.note }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="stock-level-wrapper">
+                <div class="stock-info">
+                    <span class="stock-label">Tồn kho:</span>
+                    <span class="stock-value {{ 'low-stock' if p.quantity <= p.min_quantity else '' }}">
+                        <strong>{{ p.quantity }}</strong> {{ p.unit }}
+                    </span>
+                    {% if p.quantity <= p.min_quantity %}
+                    <span class="stock-badge low">Sắp hết</span>
+                    {% endif %}
+                </div>
+                <div class="stock-progress">
+                    <div class="stock-bar {{ 'low' if p.quantity <= p.min_quantity else 'ok' }}" style="width: {{ min(100, (p.quantity / max(p.min_quantity, 1)) * 100) }}%"></div>
+                </div>
+            </div>
+
+            <div class="product-actions">
+                <div class="quantity-control">
+                    <button type="button" class="quantity-btn minus" data-minus disabled>−</button>
+                    <input type="number" class="quantity-input" min="1" max="{{ p.quantity }}" value="1"
+                           inputmode="numeric" aria-label="Số lượng xuất {{ p.name }}">
+                    <button type="button" class="quantity-btn plus" data-plus {% if p.quantity <= 1 %}disabled{% endif %}>+</button>
+                </div>
+                <button type="button" class="btn btn-primary btn-add-cart" data-add>
+                    <span class="btn-add-label">Thêm vào phiếu</span>
+                </button>
+            </div>
+        </article>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <p>Không có hàng phù hợp.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Cart Sidebar -->
+    <aside class="export-cart" id="export-cart" aria-label="Phiếu xuất">
+        <div class="cart-header">
+            <h2>📋 Phiếu xuất</h2>
+            <span class="cart-count"><span id="cart-count">0</span> mặt hàng</span>
+            <button type="button" class="cart-close" id="cart-close" aria-label="Đóng phiếu xuất">×</button>
+        </div>
+
+        <div class="cart-body">
+            <p id="cart-notice" class="cart-notice" role="status" aria-live="polite" hidden></p>
+
+            <div id="cart-lines" class="cart-lines">
+                <div class="cart-empty">
+                    <p>Chưa có sản phẩm nào</p>
+                    <small class="text-muted">Chọn sản phẩm để thêm</small>
+                </div>
+            </div>
+
+            <form method="post" action="{{ url_for('exports.review') }}" id="review-form" class="cart-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="items_json" id="items-json">
+
+                <div class="form-group">
+                    <label class="form-label">Khách hàng / Người nhận *</label>
+                    <input type="text" name="customer_name" class="form-input" placeholder="Nhập tên khách hàng" maxlength="200" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="text" name="customer_phone" class="form-input" placeholder="Nhập số điện thoại" maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Công trình / Địa chỉ</label>
+                    <textarea name="delivery_address" class="form-textarea" rows="2" placeholder="Nhập địa chỉ giao hàng" maxlength="500"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea name="note" class="form-textarea" rows="2" placeholder="Ghi chú phiếu xuất..." maxlength="500"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full" id="continue" disabled>
+                    Tiếp tục →
+                </button>
+            </form>
+        </div>
+    </aside>
+</div>
+
+{# Trên màn hình hẹp phiếu xuất nằm dưới toàn bộ danh sách hàng, thêm xong không
+   thấy phản hồi. Thanh dock này luôn hiện, cho biết phiếu đang có gì và mở phiếu. #}
+<div class="cart-backdrop" id="cart-backdrop" hidden></div>
+<button type="button" class="cart-dock" id="cart-dock" aria-controls="export-cart" aria-expanded="false">
+    <span class="cart-dock-tally">
+        <strong id="dock-items">0</strong> mặt hàng
+        <span class="cart-dock-sep">·</span>
+        <strong id="dock-units">0</strong> đơn vị
+    </span>
+    <span class="cart-dock-cta">Xem phiếu →</span>
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static',filename='js/export-cart.js') }}" defer></script>
+{% endblock %}

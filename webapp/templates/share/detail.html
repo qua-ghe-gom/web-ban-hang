@@ -1,0 +1,25 @@
+{% extends 'share/base.html' %}
+{% block title %}Ảnh {{ photo['taken_on']|vn_time('%d/%m/%Y') }}{% endblock %}
+{% block main_content %}
+<div class="photos-page">
+<div class="header">
+<h1 class="header-title">Ảnh {{ photo['taken_on']|vn_time('%d/%m/%Y') }}</h1>
+<div class="header-actions"><a class="btn btn-secondary" href="{{ url_for('share.day_view', token=token, ngay=photo['taken_on']) }}">← Về ngày này</a></div>
+</div>
+<div class="card">
+<img class="photo-detail-img" src="{{ url_for('share.media', token=token, relpath=photo['filename']) }}" alt="{{ photo['caption'] or 'Ảnh kho' }}">
+<div class="photo-nav">
+{% if prev_id %}<a class="btn btn-secondary" href="{{ url_for('share.detail', token=token, photo_id=prev_id) }}">‹ Trước</a>{% else %}<span></span>{% endif %}
+<span class="photo-position">Ảnh {{ pos }}/{{ cnt }} trong ngày</span>
+{% if next_id %}<a class="btn btn-secondary" href="{{ url_for('share.detail', token=token, photo_id=next_id) }}">Sau ›</a>{% endif %}
+</div>
+</div>
+<div class="card">
+<div class="photo-meta">
+<p>Ngày: <strong>{{ photo['taken_on']|vn_time('%d/%m/%Y') }}</strong></p>
+<p>Sản phẩm: {{ photo['product_name'] or '—' }}{% if photo['quantity'] %} — số lượng <strong>{{ photo['quantity'] }}</strong>{% endif %}</p>
+<p>Ghi chú: {{ photo['caption'] or '—' }}</p>
+</div>
+</div>
+</div>
+{% endblock %}

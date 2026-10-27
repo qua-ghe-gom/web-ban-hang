@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>{% block title %}Ảnh kho{% endblock %} · {{ app_name|upper }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v='20261020-1') }}">
+</head>
+<body class="share-body">
+<header class="share-header">
+    <a class="share-brand" href="{{ url_for('share.index', token=token) }}">📦 {{ app_name|upper }}</a>
+    <span class="share-badge">Chỉ xem</span>
+</header>
+<main class="content">
+    {% block main_content %}{% endblock %}
+</main>
+<footer class="share-footer">
+    Link chỉ xem ảnh kho — không sửa, không xoá được.
+</footer>
+</body>
+</html>

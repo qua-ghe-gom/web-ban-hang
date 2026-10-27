@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% block title %}Sao lưu & Khôi phục{% endblock %}{% block main_content %}
+<div class="backup-page">
+<div class="page-header"><h1>💾 Sao lưu & Khôi phục</h1><form method="post" action="/sao-luu/tao-moi" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-primary">+ Tạo backup ngay (DB + ảnh)</button></form></div>
+
+<div class="card">
+<h2>Danh sách backup</h2>
+<p>1 bản backup gồm 2 file cùng mốc thời gian: <strong>kho.db-…</strong> (dữ liệu) và <strong>anh-kho-….zip</strong> (toàn bộ ảnh kho). Khôi phục sẽ trả <strong>cả DB lẫn ảnh</strong> về mốc đó — bản hiện tại được chụp lại trước khi đè, không lo mất trắng.</p>
+{% if sets %}
+<div class="table-container"><table class="data-table"><thead><tr><th>Mốc</th><th>DB</th><th>Ảnh (zip)</th><th>Ngày tạo</th><th>Hành động</th></tr></thead><tbody>
+{% for s in sets %}
+<tr>
+<td><strong>{{ s.ts[:4] }}-{{ s.ts[4:6] }}-{{ s.ts[6:8] }}<small> {{ s.ts[9:11] }}:{{ s.ts[11:13] }}:{{ s.ts[13:15] }}</small></strong></td>
+<td>{% if s.db %}{{ (s.db.size / 1024)|round(1) }} KB{% else %}—{% endif %}</td>
+<td>{% if s.zip %}{{ (s.zip.size / 1024 / 1024)|round(2) }} MB{% else %}<small>không có (backup DB cũ)</small>{% endif %}</td>
+<td>{{ s.created }}</td>
+<td>
+<form method="post" action="/sao-luu/khoi-phuc/{{ s.ts }}" style="display:inline" onsubmit="return confirm('Khôi phục cả DB và ảnh về mốc {{ s.ts }}? Dữ liệu hiện tại sẽ bị đè (đã có bản before-restore).')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-secondary" style="padding:6px 12px;font-size:0.85rem">♻️ Khôi phục</button></form>
+{% if s.db %}<a class="btn btn-secondary" href="/sao-luu/tai/{{ s.db.filename }}" style="padding:6px 12px;font-size:0.85rem">⬇ DB</a>{% endif %}
+{% if s.zip %}<a class="btn btn-secondary" href="/sao-luu/tai/{{ s.zip.filename }}" style="padding:6px 12px;font-size:0.85rem">⬇ Ảnh</a>{% endif %}
+<form method="post" action="/sao-luu/xoa/{{ s.ts }}" style="display:inline;margin-left:4px" onsubmit="return confirm('Xóa cả DB và zip ảnh của mốc {{ s.ts }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem">🗑️ Xóa</button></form>
+</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p class="empty">Chưa có backup nào.</p>
+{% endif %}
+</div>
+
+{% if other %}
+<div class="card">
+<h2>File rời (bản before-restore, bản cũ)</h2>
+<div class="table-container"><table class="data-table"><thead><tr><th>File</th><th>Dung lượng</th><th>Ngày tạo</th><th></th></tr></thead><tbody>
+{% for b in other %}
+<tr><td><small>{{ b.filename }}</small></td><td>{{ (b.size / 1024)|round(1) }} KB</td><td>{{ b.created }}</td>
+<td><form method="post" action="/sao-luu/xoa-file/{{ b.filename }}" style="display:inline" onsubmit="return confirm('Xóa file {{ b.filename }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem">🗑️ Xóa</button></form></td></tr>
+{% endfor %}
+</tbody></table></div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

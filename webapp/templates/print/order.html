@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Phiếu xuất {{ order.order_code }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14pt; color: #000; background: #fff }
+        @page { margin: 15mm 15mm 15mm 15mm }
+        .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 20mm; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px }
+        .header h1 { font-size: 18pt; margin-bottom: 5px }
+        .header p { font-size: 12pt }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0 }
+        .info-group { margin-bottom: 10px }
+        .info-label { font-weight: bold }
+        .table { width: 100%; border-collapse: collapse; margin: 20px 0 }
+        .table th, .table td { border: 1px solid #000; padding: 8px 12px; text-align: left }
+        .table th { background: #f0f0f0; font-weight: bold }
+        .table .number { text-align: right }
+        .footer { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: center }
+        .sign-box { height: 80px }
+        @media print {
+            body { background: #fff }
+            .no-print { display: none }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>PHIẾU XUẤT KHO</h1>
+            <p>Mã số: {{ order.order_code }}</p>
+            <p>Ngày lập: {{ order.created_at[:10] }}</p>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-group">
+                <span class="info-label">Người xuất:</span> {{ order.created_by_name }}
+            </div>
+            <div class="info-group">
+                <span class="info-label">Người nhận:</span> {{ order.customer_name or '_________________________________' }}
+            </div>
+            <div class="info-group">
+                <span class="info-label">Địa chỉ:</span> {{ order.delivery_address or '_________________________________' }}
+            </div>
+            <div class="info-group">
+                <span class="info-label">Điện thoại:</span> {{ order.customer_phone or '_________________________________' }}
+            </div>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 40px">STT</th>
+                    <th>Sản phẩm</th>
+                    <th>SKU</th>
+                    <th>Đơn vị</th>
+                    <th class="number" style="width: 80px">Số lượng</th>
+                    <th class="number" style="width: 100px">Đơn giá</th>
+                    <th class="number" style="width: 100px">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order['items'] %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.product_name_snapshot }}</td>
+                    <td>{{ item.sku_snapshot }}</td>
+                    <td>{{ item.unit_snapshot }}</td>
+                    <td class="number">{{ item.quantity }}</td>
+                    <td class="number">{{ item.unit_price|number_format }}</td>
+                    <td class="number">{{ item.total_amount|number_format }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <div class="sign-box">
+                <p><strong>Người lập phiếu</strong></p>
+                <p style="margin-top: 40px">(Ký, ghi rõ họ tên)</p>
+            </div>
+            <div class="sign-box">
+                <p><strong>Thủ kho</strong></p>
+                <p style="margin-top: 40px">(Ký, ghi rõ họ tên)</p>
+            </div>
+            <div class="sign-box">
+                <p><strong>Người nhận</strong></p>
+                <p style="margin-top: 40px">(Ký, ghi rõ họ tên)</p>
+            </div>
+        </div>
+
+        <div class="no-print" style="text-align: center; margin-top: 30px;">
+            <button onclick="window.print()" style="padding: 12px 24px; font-size: 14pt;">🖨️ In phiếu</button>
+            <button onclick="window.close()" style="padding: 12px 24px; font-size: 14pt; margin-left: 10px;">Đóng</button>
+        </div>
+    </div>
+</body>
+</html>

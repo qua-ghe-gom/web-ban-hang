@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Ảnh {{ photo['taken_on']|vn_time('%d/%m/%Y') }}{% endblock %}
+{% block main_content %}
+<div class="photos-page">
+<div class="header">
+<h1 class="header-title">Ảnh {{ photo['taken_on']|vn_time('%d/%m/%Y') }}</h1>
+<div class="header-actions"><a class="btn btn-secondary" href="{{ url_for('photos.day_view', ngay=photo['taken_on']) }}">← Về ngày này</a></div>
+</div>
+<div class="card">
+<img class="photo-detail-img" src="{{ url_for('photos.media', relpath=photo['filename']) }}" alt="{{ photo['caption'] or 'Ảnh kho' }}">
+<div class="photo-nav">
+{% if prev_id %}<a class="btn btn-secondary" href="{{ url_for('photos.detail', photo_id=prev_id) }}">‹ Trước</a>{% else %}<span></span>{% endif %}
+<span class="photo-position">Ảnh {{ pos }}/{{ cnt }} trong ngày</span>
+{% if next_id %}<a class="btn btn-secondary" href="{{ url_for('photos.detail', photo_id=next_id) }}">Sau ›</a>{% endif %}
+</div>
+</div>
+<div class="card">
+<div class="photo-meta">
+<p>Ngày: <strong>{{ photo['taken_on']|vn_time('%d/%m/%Y') }}</strong></p>
+<p>Sản phẩm: {{ photo['product_name'] or '—' }}{% if photo['quantity'] %} — số lượng <strong>{{ photo['quantity'] }}</strong>{% endif %}</p>
+<p>Ghi chú: {{ photo['caption'] or '—' }}</p>
+<p>Up bởi {{ photo['created_by_name'] }} · {{ photo['created_at']|vn_time }}</p>
+</div>
+<div class="d-flex gap-sm" style="margin-top:12px">
+<a class="btn btn-secondary" href="{{ url_for('photos.edit_form', photo_id=photo['id']) }}">✏️ Sửa</a>
+<form method="post" action="{{ url_for('photos.delete', photo_id=photo['id']) }}" onsubmit="return confirm('Xóa hẳn ảnh này? Không khôi phục được.');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button class="btn btn-danger" type="submit">🗑️ Xóa</button>
+</form>
+</div>
+</div>
+</div>
+{% endblock %}

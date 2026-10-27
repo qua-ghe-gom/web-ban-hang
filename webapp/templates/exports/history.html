@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Lịch sử xuất kho{% endblock %}{% block main_content %}
+<h1>Lịch sử xuất kho</h1>
+<form class="filters"><input name="q" value="{{ q }}" placeholder="Mã phiếu, khách hàng, sản phẩm"><button>Tìm</button></form>
+<div class="history">
+{% for o in orders %}
+<div class="card">
+<a class="order" href="{{ url_for('exports.detail',code=o.order_code) }}">
+<strong>{{ o.order_code }}{% if o.status == 'cancelled' %} · ĐÃ HỦY{% endif %}</strong>
+<span>{{ o.created_at|vn_time }} · {{ o.created_by_name }}</span>
+<span>{{ o.customer_name or 'Không ghi người nhận' }} · {{ o.item_count }} mặt hàng</span>
+<b>{% if o.status == 'cancelled' %}Đã hủy, hàng đã trả về kho{% elif o.invoice_issued %}Đã xuất hóa đơn{% else %}Chưa xuất hóa đơn{% endif %}</b>
+</a>
+</div>
+{% else %}
+<p>Chưa có phiếu xuất.</p>
+{% endfor %}
+</div>{% endblock %}
